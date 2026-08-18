@@ -1,0 +1,11 @@
+{
+  "api_key": "if_live_9a8b7c6d5e4f3a2b",
+  "account_id": "scammer_02@tempmail.com",
+  "hardware_traits": {
+    "os_platform": "ios",
+    "keychain_id": "kc_test_999",
+    "gpu_renderer": "Apple M2 GPU",
+    "screen_resolution": "1179x2556",
+    "cpu_cores": 8
+  }
+}

@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: ironfist-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: ironfist-postgres
+    environment:
+      POSTGRES_DB: ironfist
+      POSTGRES_USER: ironfist
+      POSTGRES_PASSWORD: ironfist_secret_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./backend/db/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+
+  gateway:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ironfist-gateway
+    environment:
+      PORT: 8080
+      REDIS_URL: redis://redis:6379
+      DATABASE_URL: postgres://ironfist:ironfist_secret_password@postgres:5432/ironfist?sslmode=disable
+    ports:
+      - "8080:8080"
+    depends_on:
+      - redis
+      - postgres
+
+  mcp-server:
+    build:
+      context: ./mcp-server
+      dockerfile: Dockerfile
+    container_name: ironfist-mcp-server
+    environment:
+      MCP_PORT: 3001
+      IRONFIST_GATEWAY_URL: http://gateway:8080
+    ports:
+      - "3001:3001"
+    depends_on:
+      - gateway
+
+  web-portal:
+    build:
+      context: ./web-portal
+      dockerfile: Dockerfile
+    container_name: ironfist-web-portal
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_GATEWAY_URL: http://localhost:8080
+      NEXT_PUBLIC_MCP_URL: http://localhost:3001
+    depends_on:
+      - gateway
+      - mcp-server
