@@ -9,14 +9,14 @@ export default function LandingPage() {
 
   return (
     <div className="relative min-h-screen w-full bg-[#050505] text-white flex flex-col justify-between overflow-hidden font-sans select-none">
-      {/* Background Visual Artwork */}
+      {/* Background Visual Artwork - Positioned to center the white door portal in the 2nd/3rd vertical grid */}
       <div className="absolute inset-0 z-0">
         <Image
           src="/bg.png"
           alt="Hero background"
           fill
           priority
-          className="object-cover object-[70%_center] w-full h-full"
+          className="object-cover object-[68%_center] w-full h-full"
         />
         {/* Dark ambient gradient overlays for header & footer readability */}
         <div className="absolute inset-x-0 top-0 h-36 bg-gradient-to-b from-black/85 via-black/30 to-transparent pointer-events-none" />
@@ -25,7 +25,7 @@ export default function LandingPage() {
 
       {/* Header / Navigation Bar */}
       <header className="relative z-20 w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-12 py-7 flex items-center justify-between">
-        {/* Brand Logo - Using user's uploaded logo.jpg */}
+        {/* Brand Logo - Using user's logo.jpg */}
         <Link href="/" className="flex items-center gap-3 group">
           <div className="relative w-9 h-9 flex items-center justify-center overflow-hidden rounded-lg">
             <Image
@@ -107,29 +107,29 @@ export default function LandingPage() {
         </div>
       )}
 
-      {/* Hero Body Content */}
+      {/* Hero Body Content - Strictly locked to Rule of 1/3rds (Left 30-33% column) to avoid the white rectangle portal */}
       <main className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-12 my-auto py-12 md:py-24 flex flex-col justify-center items-start">
-        <div className="max-w-[440px] lg:max-w-[480px] text-left space-y-6">
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-[4.75rem] font-medium tracking-tight text-white leading-[1.08]">
-            The Next Layer <br />
-            of Anti-Abuse
+        <div className="w-full max-w-[340px] sm:max-w-[380px] md:max-w-[410px] lg:max-w-[440px] text-left space-y-6">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] xl:text-[4rem] font-medium tracking-tight text-white leading-[1.08]">
+            <span className="block whitespace-nowrap">The Next Layer</span>
+            <span className="block">of Anti-Abuse</span>
           </h1>
 
-          <p className="text-slate-300 text-sm sm:text-base lg:text-lg font-normal leading-relaxed text-[#94a3b8] max-w-[380px] sm:max-w-[420px] pt-1">
+          <p className="text-slate-300 text-sm sm:text-base lg:text-lg font-normal leading-relaxed text-[#94a3b8] max-w-[360px] sm:max-w-[390px] pt-1">
             A unified hardware persistence platform to help teams stop trial farming, multi-account fraud, and rate limit abuse with confidence.
           </p>
 
-          <div className="pt-4 flex items-center gap-6 sm:gap-8">
+          <div className="pt-4 flex items-center gap-5 sm:gap-7">
             <Link
               href="/dashboard"
-              className="px-7 py-3.5 rounded-full bg-white text-black font-semibold text-base hover:bg-slate-100 transition-all hover:scale-[1.03] shadow-xl"
+              className="px-7 py-3.5 rounded-full bg-white text-black font-semibold text-base hover:bg-slate-100 transition-all hover:scale-[1.03] shadow-xl whitespace-nowrap"
             >
               Get Started
             </Link>
 
             <Link
               href="/dashboard/simulator"
-              className="text-white font-medium text-base hover:text-slate-300 transition-colors flex items-center gap-2"
+              className="text-white font-medium text-base hover:text-slate-300 transition-colors flex items-center gap-2 whitespace-nowrap"
             >
               View Architecture
             </Link>
