@@ -24,7 +24,7 @@ export default function LandingPage() {
       </div>
 
       {/* Header / Navigation Bar */}
-      <header className="relative z-20 w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-12 py-7 flex items-center justify-between">
+      <header className="relative z-20 w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-12 py-7 flex items-center justify-between animate-hero-fade-in">
         {/* Brand Logo - Using user's logo.jpg */}
         <Link href="/" className="flex items-center gap-3 group">
           <div className="relative w-9 h-9 flex items-center justify-center overflow-hidden rounded-lg">
@@ -107,9 +107,9 @@ export default function LandingPage() {
         </div>
       )}
 
-      {/* Hero Body Content - Strictly locked to Rule of 1/3rds (Left 30-33% column) to avoid the white rectangle portal */}
+      {/* Hero Body Content - Locked to Rule of 1/3rds (Left column) with entrance animation */}
       <main className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-12 my-auto py-12 md:py-24 flex flex-col justify-center items-start">
-        <div className="w-full max-w-[340px] sm:max-w-[380px] md:max-w-[410px] lg:max-w-[440px] text-left space-y-6">
+        <div className="w-full max-w-[340px] sm:max-w-[380px] md:max-w-[410px] lg:max-w-[440px] text-left space-y-6 animate-hero-fade-in-delayed">
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[3.5rem] xl:text-[4rem] font-medium tracking-tight text-white leading-[1.08]">
             <span className="block whitespace-nowrap">The Next Layer</span>
             <span className="block">of Anti-Abuse</span>
@@ -129,16 +129,24 @@ export default function LandingPage() {
 
             <Link
               href="/dashboard/simulator"
-              className="text-white font-medium text-base hover:text-slate-300 transition-colors flex items-center gap-2 whitespace-nowrap"
+              className="text-white font-medium text-base hover:text-slate-300 transition-colors flex items-center gap-2 group/link whitespace-nowrap"
             >
-              View Architecture
+              <span>View Architecture</span>
+              <svg
+                className="w-4 h-4 text-slate-300 group-hover/link:text-white group-hover/link:translate-x-1.5 transition-all duration-300"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
             </Link>
           </div>
         </div>
       </main>
 
       {/* Bottom Ecosystem Platforms */}
-      <footer className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-12 pb-8 sm:pb-12 pt-4">
+      <footer className="relative z-10 w-full max-w-7xl mx-auto px-6 sm:px-10 lg:px-12 pb-8 sm:pb-12 pt-4 animate-hero-fade-in-delayed">
         <div className="flex flex-wrap items-center justify-between gap-8 md:gap-12 opacity-65 hover:opacity-95 transition-opacity font-mono text-xs sm:text-sm tracking-wider uppercase">
           {/* iOS SDK */}
           <div className="flex items-center gap-2.5 text-slate-300 font-semibold">
