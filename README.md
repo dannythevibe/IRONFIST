@@ -179,4 +179,5 @@ Add the IronFist SSE link to your Cursor or Claude Code environment to enable au
 
 ## License
 
-Private and proprietary. All rights reserved.
+This project is licensed under the **Apache License 2.0** - see the [LICENSE](LICENSE) file for details.
+
