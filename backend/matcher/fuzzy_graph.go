@@ -32,6 +32,7 @@ type HardwareTraits struct {
 	ColorDepth       int    `json:"color_depth"`       // e.g. 24, 32
 	Timezone         string `json:"timezone"`          // e.g. America/New_York
 	Language         string `json:"language"`          // e.g. en-US
+	SubnetIP         string `json:"subnet_ip,omitempty"`// Subnet / IP prefix
 	CanvasHash       string `json:"canvas_hash,omitempty"`
 	WebGLHash        string `json:"webgl_hash,omitempty"`
 	FontHash         string `json:"font_hash,omitempty"`
@@ -58,6 +59,7 @@ type MatchResult struct {
 	Score            float64    `json:"score"`
 	Threshold        float64    `json:"threshold"`
 	Deterministic    bool       `json:"deterministic"`
+	MatchType        string     `json:"match_type,omitempty"` // EXACT_MATCH_REUSE, FUZZY_GRAPH_MATCH, NEW_DEVICE
 	TrialAlreadyUsed bool       `json:"trial_already_used"`
 	Reason           string     `json:"reason"`
 	MatchedNode      *GraphNode `json:"matched_node,omitempty"`
@@ -124,16 +126,17 @@ func (m *FuzzyGraphMatcher) CheckAndRegister(traits HardwareTraits, accountID st
 		if detID != "" {
 			if nodeID, found := m.detIndex[detID]; found {
 				if node, ok := m.nodes[nodeID]; ok {
-					// Associate account if missing
 					m.associateAccount(node, accountID)
 					m.saveToDiskUnsafe()
 
+					matchType := "EXACT_MATCH_REUSE"
 					return &MatchResult{
 						Matched:          true,
 						MatchedNodeID:    node.ID,
 						Score:            1.00,
 						Threshold:        m.Threshold,
 						Deterministic:    true,
+						MatchType:        matchType,
 						TrialAlreadyUsed: node.TrialClaimed,
 						Reason:           "Deterministic Hardware ID match (" + detID + ")",
 						MatchedNode:      node,
@@ -156,17 +159,21 @@ func (m *FuzzyGraphMatcher) CheckAndRegister(traits HardwareTraits, accountID st
 	}
 
 	if bestMatch != nil && bestScore >= m.Threshold {
+		// Enforce 72-hour window check for newly created account/node matching
+		within72h := time.Since(bestMatch.CreatedAt) <= 72*time.Hour
 		m.associateAccount(bestMatch, accountID)
 		m.indexDeterministicIDs(bestMatch.ID, traits)
 		m.saveToDiskUnsafe()
 
+		matchType := "FUZZY_GRAPH_MATCH"
 		return &MatchResult{
 			Matched:          true,
 			MatchedNodeID:    bestMatch.ID,
 			Score:            bestScore,
 			Threshold:        m.Threshold,
 			Deterministic:    false,
-			TrialAlreadyUsed: bestMatch.TrialClaimed,
+			MatchType:        matchType,
+			TrialAlreadyUsed: bestMatch.TrialClaimed || within72h,
 			Reason:           fmt.Sprintf("Fuzzy Graph Trait Match (Similarity S=%.3f >= %.2f)", bestScore, m.Threshold),
 			MatchedNode:      bestMatch,
 		}, bestMatch
@@ -198,6 +205,7 @@ func (m *FuzzyGraphMatcher) CheckAndRegister(traits HardwareTraits, accountID st
 		Score:            bestScore,
 		Threshold:        m.Threshold,
 		Deterministic:    false,
+		MatchType:        "NEW_DEVICE",
 		TrialAlreadyUsed: false,
 		Reason:           "New unique physical hardware node created",
 		MatchedNode:      newNode,
@@ -205,22 +213,23 @@ func (m *FuzzyGraphMatcher) CheckAndRegister(traits HardwareTraits, accountID st
 }
 
 // CalculateSimilarity computes weighted similarity score (0.0 to 1.0) between two trait sets.
+// Formula: S = w1(CPU) + w2(Screen) + w3(Subnet) + w4(GPU) + w5(Canvas/WebGL)
 func CalculateSimilarity(t1, t2 HardwareTraits) float64 {
 	if t1.OSPlatform != "" && t2.OSPlatform != "" && !strings.EqualFold(t1.OSPlatform, t2.OSPlatform) {
 		return 0.10
 	}
 
 	weights := map[string]float64{
-		"gpu":          0.25,
-		"resolution":   0.20,
-		"cpu_mem":      0.15,
-		"timezone_lang": 0.10,
-		"canvas_webgl": 0.30,
+		"cpu_mem":      0.20, // w1(CPU)
+		"resolution":   0.20, // w2(Screen)
+		"subnet":       0.15, // w3(Subnet)
+		"gpu":          0.25, // w4(GPU)
+		"canvas_webgl": 0.20, // Canvas/WebGL
 	}
 
 	totalScore := 0.0
 
-	// GPU Renderer
+	// GPU Renderer (w4)
 	if t1.GpuRenderer != "" && t2.GpuRenderer != "" {
 		if strings.EqualFold(t1.GpuRenderer, t2.GpuRenderer) {
 			totalScore += weights["gpu"]
@@ -230,26 +239,33 @@ func CalculateSimilarity(t1, t2 HardwareTraits) float64 {
 		}
 	}
 
-	// Screen Resolution
+	// Screen Resolution (w2)
 	if t1.ScreenResolution != "" && t2.ScreenResolution != "" && t1.ScreenResolution == t2.ScreenResolution {
 		totalScore += weights["resolution"]
 	}
 
-	// CPU Cores & Memory
+	// CPU Cores & Memory (w1)
 	if t1.CpuCores > 0 && t2.CpuCores > 0 && t1.CpuCores == t2.CpuCores {
-		cpuScore := 0.10
+		cpuScore := weights["cpu_mem"] * 0.6
 		if t1.MemoryGB > 0 && t2.MemoryGB > 0 && t1.MemoryGB == t2.MemoryGB {
-			cpuScore += 0.05
+			cpuScore += weights["cpu_mem"] * 0.4
 		}
 		totalScore += cpuScore
 	}
 
+	// Subnet / IP Prefix (w3)
+	if t1.SubnetIP != "" && t2.SubnetIP != "" {
+		if extractSubnet(t1.SubnetIP) == extractSubnet(t2.SubnetIP) {
+			totalScore += weights["subnet"]
+		}
+	}
+
 	// Timezone & Language
 	if t1.Timezone != "" && t2.Timezone != "" && t1.Timezone == t2.Timezone {
-		totalScore += weights["timezone_lang"] * 0.6
+		totalScore += 0.05
 	}
 	if t1.Language != "" && t2.Language != "" && t1.Language == t2.Language {
-		totalScore += weights["timezone_lang"] * 0.4
+		totalScore += 0.05
 	}
 
 	// Canvas / WebGL Hashes
@@ -261,6 +277,23 @@ func CalculateSimilarity(t1, t2 HardwareTraits) float64 {
 	}
 
 	return math.Min(1.0, totalScore)
+}
+
+func extractSubnet(ipStr string) string {
+	parts := strings.Split(strings.TrimSpace(ipStr), ":")
+	if len(parts) > 1 {
+		// IPv6 prefix
+		if len(parts) >= 3 {
+			return strings.Join(parts[:3], ":")
+		}
+		return parts[0]
+	}
+	// IPv4 /24 subnet
+	octets := strings.Split(ipStr, ".")
+	if len(octets) >= 3 {
+		return strings.Join(octets[:3], ".")
+	}
+	return ipStr
 }
 
 func (m *FuzzyGraphMatcher) associateAccount(node *GraphNode, accountID string) {
