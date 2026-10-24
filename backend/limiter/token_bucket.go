@@ -74,7 +74,7 @@ func NewTokenBucketLimiter(rdb *redis.Client) *TokenBucketLimiter {
 
 // Check evaluates whether a request is allowed under the token bucket policy.
 func (tbl *TokenBucketLimiter) Check(ctx context.Context, key string, capacity float64, refillRate float64, requested float64) (*TokenBucketResult, error) {
-	now := time.Now().UnixNano() / int64(time.Second)
+	now := float64(time.Now().UnixNano()) / 1e9
 
 	if tbl.redisClient != nil {
 		res, err := tbl.luaScript.Run(ctx, tbl.redisClient, []string{"tb:" + key}, capacity, refillRate, requested, now).Result()

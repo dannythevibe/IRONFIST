@@ -10,11 +10,14 @@ public class IronFistIOS {
         var traits: [String: Any] = [
             "os_platform": "ios",
             "os_version": UIDevice.current.systemVersion,
+            "model": UIDevice.current.model,
             "cpu_cores": ProcessInfo.processInfo.processorCount,
             "memory_gb": Int(ProcessInfo.processInfo.physicalMemory / (1024 * 1024 * 1024)),
             "keychain_id": getOrCreateKeychainID(),
             "gpu_renderer": "Apple Metal GPU",
-            "screen_resolution": "\(Int(UIScreen.main.bounds.width))x\(Int(UIScreen.main.bounds.height))"
+            "screen_resolution": "\(Int(UIScreen.main.bounds.width))x\(Int(UIScreen.main.bounds.height))",
+            "timezone": TimeZone.current.identifier,
+            "language": Locale.current.identifier
         ]
         
         if let idfv = UIDevice.current.identifierForVendor?.uuidString {

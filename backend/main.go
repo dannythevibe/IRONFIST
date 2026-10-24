@@ -11,6 +11,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/ironfist/ironfist-backend/api"
+	"github.com/ironfist/ironfist-backend/db"
 	"github.com/ironfist/ironfist-backend/limiter"
 	"github.com/ironfist/ironfist-backend/matcher"
 	"github.com/redis/go-redis/v9"
@@ -20,6 +21,15 @@ func main() {
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
+	}
+
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL != "" {
+		if _, err := db.InitDB(dbURL); err != nil {
+			log.Printf("Warning: PostgreSQL DB initialization failed (%v), continuing with persistent JSON file store\n", err)
+		}
+	} else {
+		log.Println("DATABASE_URL not set; running with persistent JSON file store")
 	}
 
 	redisAddr := os.Getenv("REDIS_URL")

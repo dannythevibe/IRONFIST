@@ -202,6 +202,9 @@ func (s *Server) HandleVerifyTrial(w http.ResponseWriter, r *http.Request) {
 	if clientIP == "" {
 		clientIP = r.RemoteAddr
 	}
+	if req.HardwareTraits.SubnetIP == "" {
+		req.HardwareTraits.SubnetIP = clientIP
+	}
 	ipRisk := ipintel.InspectIP(clientIP)
 
 	if req.RequireNoVPN && (ipRisk.IsVPN || ipRisk.IsDatacenter) {
@@ -232,6 +235,14 @@ func (s *Server) HandleVerifyTrial(w http.ResponseWriter, r *http.Request) {
 		decision = "BLOCKED_OVERRIDE"
 		allowed = false
 		reason = "Device blocked by administrator: " + node.BlockReason
+	} else if matchRes.MatchType == "EXACT_MATCH_REUSE" && matchRes.TrialAlreadyUsed {
+		decision = "EXACT_MATCH_REUSE"
+		allowed = false
+		reason = "Deterministic hardware match reused across accounts. Free trial blocked (" + matchRes.Reason + ")"
+	} else if matchRes.MatchType == "FUZZY_GRAPH_MATCH" && matchRes.TrialAlreadyUsed {
+		decision = "FUZZY_GRAPH_MATCH"
+		allowed = false
+		reason = "Fuzzy trait similarity match (S >= 0.88) within 72h window. Free trial blocked (" + matchRes.Reason + ")"
 	} else if matchRes.TrialAlreadyUsed {
 		decision = "BLOCKED_TRIAL_REUSED"
 		allowed = false
