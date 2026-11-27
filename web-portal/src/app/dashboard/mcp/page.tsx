@@ -1,231 +1,103 @@
 'use client';
 
-import { useState } from 'react';
-import { Cpu, Copy, Check, Terminal, Code2, ShieldCheck, Zap } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { Cpu } from 'lucide-react';
+import { CodeBlock, CopyButton, PageHeader } from '@/components/ui';
 
-export default function MCPGeneratorPage() {
-  const [copied, setCopied] = useState(false);
-  const [activeTab, setActiveTab] = useState<'cursor' | 'trae' | 'claude' | 'stdio'>('cursor');
-  const [apiKey, setApiKey] = useState('if_live_9a8b7c6d5e4f3a2b');
+const TOOLS: [string, string][] = [
+  ['ironfist_verify_device', 'Checks whether an account may claim a trial on a device.'],
+  ['ironfist_list_devices', 'Lists known devices with their linked accounts.'],
+  ['ironfist_get_device', 'Shows one device: traits, accounts, trial and block status.'],
+  ['ironfist_override_device', 'Blocks or unblocks a device.'],
+  ['ironfist_recent_verifications', 'Returns the latest verification decisions.'],
+  ['ironfist_check_token_bucket', 'Takes tokens from a named rate-limit bucket.'],
+];
 
-  const mcpSseUrl = `https://mcp.ironfist.dev/v1/sse?key=${apiKey}`;
+type Tab = 'claude' | 'cursor' | 'curl';
 
-  const cursorConfig = `{
-  "mcpServers": {
-    "ironfist": {
-      "url": "${mcpSseUrl}",
-      "transport": "sse"
-    }
-  }
-}`;
+export default function McpPage() {
+  const [origin, setOrigin] = useState('https://YOUR-IRONFIST-URL');
+  const [tab, setTab] = useState<Tab>('claude');
 
-  const traeConfig = `{
-  "mcpServers": {
-    "ironfist-anti-abuse": {
-      "url": "${mcpSseUrl}",
-      "type": "sse"
-    }
-  }
-}`;
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
 
-  const claudeConfig = `{
-  "mcpServers": {
-    "ironfist": {
-      "command": "npx",
-      "args": ["-y", "@ironfist/mcp-server", "--stdio"],
-      "env": {
-        "IRONFIST_API_KEY": "${apiKey}",
-        "IRONFIST_GATEWAY_URL": "http://localhost:8080"
-      }
-    }
-  }
-}`;
+  const url = `${origin}/mcp`;
+  const key = 'if_sk_YOUR_SECRET_KEY';
 
-  const stdioCmd = `npx -y @ironfist/mcp-server --stdio`;
-
-  const copyText = (text: string) => {
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const snippets: Record<Tab, { label: string; note: string; code: string }> = {
+    claude: {
+      label: 'Claude Code',
+      note: 'Run this in your terminal:',
+      code: `claude mcp add --transport http ironfist ${url} \\\n  --header "Authorization: Bearer ${key}"`,
+    },
+    cursor: {
+      label: 'Cursor / JSON config',
+      note: 'Add to .cursor/mcp.json, or any client that takes a JSON server list:',
+      code: JSON.stringify(
+        { mcpServers: { ironfist: { url, headers: { Authorization: `Bearer ${key}` } } } },
+        null,
+        2,
+      ),
+    },
+    curl: {
+      label: 'curl',
+      note: 'Check the endpoint by listing its tools:',
+      code: `curl -X POST ${url} \\\n  -H "Authorization: Bearer ${key}" \\\n  -H "Content-Type: application/json" \\\n  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'`,
+    },
   };
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <div className="flex items-center gap-2 text-cyan-400 font-mono text-xs uppercase tracking-wider mb-1">
-          <Cpu className="w-4 h-4" /> Protocol Provisioning
+      <PageHeader eyebrow="Model Context Protocol" title="MCP for AI Agents" icon={<Cpu className="w-4 h-4" />}>
+        Connect an AI coding agent to this workspace so it can inspect devices, read the verification log and block
+        abusers. The endpoint speaks MCP over HTTP and is authenticated with a secret key.
+      </PageHeader>
+
+      <div className="glass-cyber-glow p-6 rounded-2xl space-y-3">
+        <h3 className="font-bold text-lg text-white">Endpoint</h3>
+        <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 flex items-center gap-3">
+          <code className="text-xs sm:text-sm font-mono text-cyan-300 truncate flex-1">{url}</code>
+          <CopyButton text={url} />
         </div>
-        <h1 className="text-3xl font-extrabold text-white tracking-tight">Model Context Protocol (MCP) Link Generator</h1>
-        <p className="text-slate-400 text-sm mt-1">
-          Generate an SSE MCP link or Stdio configuration to empower AI coding agents (Cursor, Trae, Claude Code) to wire up anti-abuse protection instantly.
+        <p className="text-xs text-slate-400">
+          Replace <code className="text-cyan-300">{key}</code> below with a secret key from the{' '}
+          <Link href="/dashboard/keys" className="text-cyan-400 hover:underline">
+            API Keys
+          </Link>{' '}
+          page. Create a dedicated key for each agent so you can revoke it on its own.
         </p>
       </div>
 
-      {/* Dynamic Link Generator Box */}
-      <div className="glass-panel-glow p-6 rounded-2xl border border-cyan-500/30 space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <h3 className="font-bold text-lg text-white">Your Secured MCP Server Link</h3>
-            <p className="text-xs text-slate-400">Tied to API Key: <code className="text-cyan-400 font-mono">{apiKey}</code></p>
-          </div>
-
-          <button
-            onClick={() => copyText(mcpSseUrl)}
-            className="px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs flex items-center gap-2 shadow-lg shadow-cyan-500/20 transition-all self-start sm:self-auto"
-          >
-            {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-            {copied ? 'Copied Link!' : 'Copy SSE Link'}
-          </button>
+      <div className="glass-cyber p-6 rounded-2xl border border-slate-800 space-y-4">
+        <div className="flex flex-wrap items-center gap-2 p-1 bg-slate-950 rounded-xl border border-slate-800 text-xs font-mono w-fit">
+          {(Object.keys(snippets) as Tab[]).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className={`px-3 py-1.5 rounded-lg transition-all ${
+                tab === t ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              {snippets[t].label}
+            </button>
+          ))}
         </div>
-
-        <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 flex items-center gap-3">
-          <span className="w-3 h-3 rounded-full bg-emerald-400 animate-pulse" />
-          <code className="text-xs sm:text-sm font-mono text-cyan-300 truncate flex-1">{mcpSseUrl}</code>
-        </div>
+        <p className="text-xs text-slate-300">{snippets[tab].note}</p>
+        <CodeBlock code={snippets[tab].code} />
       </div>
 
-      {/* Tabbed IDE Snippet Configurations */}
-      <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-6">
-        <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-          <h3 className="font-bold text-lg text-white flex items-center gap-2">
-            <Code2 className="w-5 h-5 text-indigo-400" /> AI Agent Setup Instructions
-          </h3>
-
-          <div className="flex items-center gap-2 p-1 bg-slate-950 rounded-xl border border-slate-800 text-xs font-mono">
-            <button
-              onClick={() => setActiveTab('cursor')}
-              className={`px-3 py-1.5 rounded-lg transition-all ${
-                activeTab === 'cursor' ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              Cursor IDE
-            </button>
-            <button
-              onClick={() => setActiveTab('trae')}
-              className={`px-3 py-1.5 rounded-lg transition-all ${
-                activeTab === 'trae' ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              Trae Agent
-            </button>
-            <button
-              onClick={() => setActiveTab('claude')}
-              className={`px-3 py-1.5 rounded-lg transition-all ${
-                activeTab === 'claude' ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              Claude Code
-            </button>
-            <button
-              onClick={() => setActiveTab('stdio')}
-              className={`px-3 py-1.5 rounded-lg transition-all ${
-                activeTab === 'stdio' ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30' : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              Stdio CLI
-            </button>
-          </div>
-        </div>
-
-        {/* Tab Contents */}
-        {activeTab === 'cursor' && (
-          <div className="space-y-3">
-            <p className="text-xs text-slate-300">
-              Add the following to your project's <code className="text-cyan-400 font-mono">.cursor/mcp.json</code>:
-            </p>
-            <div className="relative">
-              <pre className="p-4 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono text-cyan-300 overflow-x-auto">
-                {cursorConfig}
-              </pre>
-              <button
-                onClick={() => copyText(cursorConfig)}
-                className="absolute top-3 right-3 p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all"
-              >
-                <Copy className="w-3.5 h-3.5" />
-              </button>
+      <div className="glass-cyber p-6 rounded-2xl border border-slate-800 space-y-4">
+        <h3 className="font-bold text-lg text-white">Tools</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
+          {TOOLS.map(([name, desc]) => (
+            <div key={name} className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+              <div className="font-mono text-cyan-400 font-bold">{name}</div>
+              <p className="text-slate-400">{desc}</p>
             </div>
-          </div>
-        )}
-
-        {activeTab === 'trae' && (
-          <div className="space-y-3">
-            <p className="text-xs text-slate-300">
-              Paste into Trae MCP Config (<code className="text-cyan-400 font-mono">mcp.json</code>):
-            </p>
-            <div className="relative">
-              <pre className="p-4 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono text-indigo-300 overflow-x-auto">
-                {traeConfig}
-              </pre>
-              <button
-                onClick={() => copyText(traeConfig)}
-                className="absolute top-3 right-3 p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all"
-              >
-                <Copy className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'claude' && (
-          <div className="space-y-3">
-            <p className="text-xs text-slate-300">
-              Add to <code className="text-cyan-400 font-mono">claude_desktop_config.json</code>:
-            </p>
-            <div className="relative">
-              <pre className="p-4 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono text-purple-300 overflow-x-auto">
-                {claudeConfig}
-              </pre>
-              <button
-                onClick={() => copyText(claudeConfig)}
-                className="absolute top-3 right-3 p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all"
-              >
-                <Copy className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-        )}
-
-        {activeTab === 'stdio' && (
-          <div className="space-y-3">
-            <p className="text-xs text-slate-300">Launch directly from command line via Stdio transport:</p>
-            <div className="relative">
-              <pre className="p-4 rounded-xl bg-slate-950 border border-slate-800 text-xs font-mono text-emerald-300 overflow-x-auto">
-                {stdioCmd}
-              </pre>
-              <button
-                onClick={() => copyText(stdioCmd)}
-                className="absolute top-3 right-3 p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all"
-              >
-                <Copy className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Native Tools Breakdown */}
-      <div className="glass-panel p-6 rounded-2xl border border-slate-800 space-y-4">
-        <h3 className="font-bold text-lg text-white">Exposed MCP Server Tools</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-          <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
-            <div className="font-mono text-cyan-400 font-bold text-sm">ironfist_verify_device</div>
-            <p className="text-slate-400">
-              Evaluates hardware traits, IDFV/Keychain/Widevine/MachineGuid, rate limits, and trial eligibility.
-            </p>
-          </div>
-          <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
-            <div className="font-mono text-indigo-400 font-bold text-sm">ironfist_check_token_bucket</div>
-            <p className="text-slate-400">
-              Queries atomic Redis Lua token bucket for remaining capacity and refill timing.
-            </p>
-          </div>
-          <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
-            <div className="font-mono text-purple-400 font-bold text-sm">ironfist_override_user</div>
-            <p className="text-slate-400">
-              Manually whitelists or blocks a target device node ID for customer support or fraud enforcement.
-            </p>
-          </div>
+          ))}
         </div>
       </div>
     </div>
