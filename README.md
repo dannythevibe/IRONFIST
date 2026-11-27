@@ -128,11 +128,9 @@ Source files to copy into your project. They are not published to npm, CocoaPods
 worker/        Cloudflare Worker: API, MCP endpoint, D1 schema, tests
 web-portal/    Next.js console and landing page (static export served by the Worker)
 sdks/          Client SDKs
-backend/       Legacy Go prototype. Not deployed and not maintained; see note below
-mcp-server/    Legacy Node MCP server. Superseded by the Worker's /mcp endpoint
 ```
 
-`backend/`, `mcp-server/` and `docker-compose.yml` are the original prototype. They have no authentication and are not what runs in production. They are kept for reference and can be deleted.
+The original Go and Node prototype was removed; it is in the git history before this layout.
 
 ## Run it yourself
 
