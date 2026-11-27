@@ -43,24 +43,24 @@ export default function LandingPage() {
 
         {/* Center Nav Links */}
         <nav className="hidden md:flex items-center gap-10 text-sm font-medium text-slate-300">
-          <Link href="#features" className="hover:text-white transition-colors">
-            Features
+          <Link href="/docs" className="hover:text-white transition-colors">
+            Docs
           </Link>
-          <Link href="#sdks" className="hover:text-white transition-colors">
+          <Link href="/docs#reference" className="hover:text-white transition-colors">
+            API
+          </Link>
+          <Link href="/docs#sdks" className="hover:text-white transition-colors">
             SDKs
           </Link>
-          <Link href="#architecture" className="hover:text-white transition-colors">
-            Architecture
-          </Link>
-          <Link href="/dashboard" className="hover:text-white transition-colors">
-            Console
+          <Link href="/login" className="hover:text-white transition-colors">
+            Sign in
           </Link>
         </nav>
 
         {/* Action Button */}
         <div className="hidden md:flex items-center">
           <Link
-            href="/dashboard"
+            href="/signup"
             className="px-6 py-2.5 rounded-full bg-white text-black font-semibold text-sm hover:bg-slate-100 transition-all hover:scale-[1.03] shadow-md"
           >
             Get Started
@@ -86,20 +86,20 @@ export default function LandingPage() {
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
         <div className="relative z-30 md:hidden bg-black/95 backdrop-blur-lg border-b border-slate-800 px-6 py-6 space-y-4 font-mono">
-          <Link href="#features" className="block text-slate-300 hover:text-white py-2">
-            Features
+          <Link href="/docs" className="block text-slate-300 hover:text-white py-2">
+            Docs
           </Link>
-          <Link href="#sdks" className="block text-slate-300 hover:text-white py-2">
+          <Link href="/docs#reference" className="block text-slate-300 hover:text-white py-2">
+            API
+          </Link>
+          <Link href="/docs#sdks" className="block text-slate-300 hover:text-white py-2">
             SDKs
           </Link>
-          <Link href="#architecture" className="block text-slate-300 hover:text-white py-2">
-            Architecture
-          </Link>
-          <Link href="/dashboard" className="block text-slate-300 hover:text-white py-2">
-            Console
+          <Link href="/login" className="block text-slate-300 hover:text-white py-2">
+            Sign in
           </Link>
           <Link
-            href="/dashboard"
+            href="/signup"
             className="inline-block w-full text-center px-6 py-3 rounded-full bg-white text-black font-semibold text-sm hover:bg-slate-100"
           >
             Get Started
@@ -121,17 +121,17 @@ export default function LandingPage() {
 
           <div className="pt-4 flex items-center gap-5 sm:gap-7">
             <Link
-              href="/dashboard"
+              href="/signup"
               className="px-7 py-3.5 rounded-full bg-white text-black font-semibold text-base hover:bg-slate-100 transition-all hover:scale-[1.03] shadow-xl whitespace-nowrap"
             >
               Get Started
             </Link>
 
             <Link
-              href="/dashboard/simulator"
+              href="/docs"
               className="text-white font-medium text-base hover:text-slate-300 transition-colors flex items-center gap-2 group/link whitespace-nowrap"
             >
-              <span>View Architecture</span>
+              <span>Read the docs</span>
               <svg
                 className="w-4 h-4 text-slate-300 group-hover/link:text-white group-hover/link:translate-x-1.5 transition-all duration-300"
                 fill="none"

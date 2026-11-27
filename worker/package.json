@@ -1,0 +1,20 @@
+{
+  "name": "ironfist-worker",
+  "version": "3.0.0",
+  "private": true,
+  "type": "module",
+  "description": "IronFist API, MCP endpoint and console host, running on Cloudflare Workers",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "migrate:local": "wrangler d1 migrations apply ironfist --local",
+    "migrate:remote": "wrangler d1 migrations apply ironfist --remote",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test test/*.test.ts"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20261123.1",
+    "typescript": "^5.6.0",
+    "wrangler": "^4.168.0"
+  }
+}
